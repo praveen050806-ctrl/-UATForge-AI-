@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UATForge AI
 
-## Getting Started
+> **From Business Requirements to Ready-to-Execute UAT**
 
-First, run the development server:
+UATForge AI is an enterprise-grade AI-powered UAT engineering platform that converts business requirements, user stories, and specifications into structured, validated, and editable UAT test suites.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🌟 Core Product Pipeline
+
+```
+Requirement Ingestion
+       ↓
+Requirement Understanding (AI Extraction)
+       ↓
+Scenario Generation (Positive, Negative, Boundary, Role-Based)
+       ↓
+Deterministic Quality Validation
+       ↓
+Human Review, Editing & Regeneration
+       ↓
+Bidirectional Traceability & Deliverables Export (Excel, CSV)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Core Engineering Principle
+> **AI generates. Validation checks. Human approves.**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🏗️ Architecture & Module Structure
 
-## Learn More
+```
+src/
+├── app/
+│   ├── page.tsx               # Enterprise landing & product entry
+│   ├── layout.tsx             # Root layout with Geist font & metadata
+│   ├── globals.css            # Dark enterprise design system & theme variables
+│   ├── dashboard/             # Executive coverage & KPI dashboard
+│   ├── requirements/          # Requirement ingestion workspace
+│   ├── test-suites/           # Multi-archetype test suites & drill-down
+│   ├── validation/            # Automated quality validation & integrity gate
+│   ├── traceability/          # Bidirectional requirement-to-case matrix
+│   ├── exports/               # Formatted Excel (.xlsx) & CSV export studio
+│   └── api/
+│       └── health/            # System status & readiness endpoint
+│
+├── components/
+│   ├── layout/                # Sidebar, Header, AppShell, PageHeader
+│   ├── ui/                    # Reusable StatusBadge, ScenarioBadge, KpiCard, etc.
+│   ├── dashboard/             # Metric cards, coverage charts, recent items
+│   ├── requirements/          # Workspace forms, input selectors, intelligence preview
+│   ├── test-suites/           # Filterable test case tables & step inspection modal
+│   ├── validation/            # Categorized quality inspection cards
+│   └── traceability/          # Flow topology and relationship matrix
+│
+├── lib/
+│   ├── ai/                    # Gemini AI service abstraction (Deferred to M2)
+│   ├── db/                    # MongoDB connection abstraction (Deferred to M2)
+│   ├── validation/            # Zod validation schemas for domain models
+│   ├── export/                # Excel & CSV generation abstractions
+│   └── utils.ts               # Standard styling utilities (clsx + tailwind-merge)
+│
+└── types/                     # Extensible TypeScript domain model definitions
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚀 Getting Started
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Prerequisites
+- Node.js `v20+` or `v24+`
+- npm `v10+`
 
-## Deploy on Vercel
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/praveen050806-ctrl/-UATForge-AI-.git
+cd -UATForge-AI-
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Install dependencies
+npm install
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Local Development
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Quality Verification
+```bash
+# Type check & build
+npm run build
+
+# Lint verification
+npm run lint
+```
+
+---
+
+## 🔒 Security & Secrets Hygiene
+- No secrets or credentials are hard-coded in this repository.
+- `.env*` files are strictly excluded via `.gitignore`.
+- Reference configuration is documented in [`.env.example`](.env.example).
+
+---
+
+## 📌 Milestone Status
+
+- **Milestone 1A**: Next.js TypeScript foundation, build system & git configuration. *(Completed)*
+- **Milestone 1B**: Enterprise SaaS application shell, navigation, routes, reusable UI components, and architectural abstractions. *(Completed)*
+- **Milestone 2**: Gemini API integration for requirement understanding & scenario synthesis. *(Upcoming)*
+- **Milestone 3**: MongoDB persistence & dynamic CRUD for suites. *(Upcoming)*
