@@ -41,10 +41,10 @@ export function Header() {
       {/* Right Actions & Status */}
       <div className="flex items-center gap-3">
         {/* System State Indicator */}
-        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-300">
           <Cpu className="w-3.5 h-3.5 text-amber-400" />
           <span>Gemini AI:</span>
-          <span className="text-slate-400">Deferred (Next Milestone)</span>
+          <span className="text-amber-400 font-semibold">Active Engine</span>
         </div>
 
         {/* Demo Indicator */}

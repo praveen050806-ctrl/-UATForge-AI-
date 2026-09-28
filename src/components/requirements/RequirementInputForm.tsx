@@ -7,24 +7,38 @@ import {
   GitBranch,
   UploadCloud,
   Sparkles,
-  Info,
-  X,
   FileCheck,
+  RotateCcw,
+  Loader2,
 } from "lucide-react";
 import { RequirementInputType } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface RequirementInputFormProps {
-  onUnderstandClick?: () => void;
+  onSubmit: (params: {
+    title: string;
+    content: string;
+    inputType: RequirementInputType;
+    documentFileName?: string;
+  }) => void;
+  isLoading?: boolean;
+  initialValues?: {
+    title: string;
+    content: string;
+    inputType: RequirementInputType;
+  };
 }
 
-export function RequirementInputForm({}: RequirementInputFormProps) {
-  const [title, setTitle] = useState(
-    "User Multi-Factor Authentication (MFA) Enrollment Workflow"
-  );
-  const [inputType, setInputType] = useState<RequirementInputType>("user-story");
-  const [content, setContent] = useState(
-    `As a registered enterprise user,
+const SAMPLE_EXPENSE_CLAIM = {
+  title: "Employee Expense Reimbursement & Multi-Tier Approval Workflow",
+  inputType: "workflow" as RequirementInputType,
+  content: `An employee submits an expense claim. If the expense is ₹10,000 or less, the manager can approve it. Expenses between ₹10,001 and ₹50,000 require manager and finance approval. Expenses above ₹50,000 require manager, finance and admin approval. If the employee does not provide a receipt, the expense must be rejected. After approval, finance processes the payment and the employee receives a notification.`,
+};
+
+const SAMPLE_MFA = {
+  title: "User Multi-Factor Authentication (MFA) Enrollment Workflow",
+  inputType: "user-story" as RequirementInputType,
+  content: `As a registered enterprise user,
 I want to enroll an Authenticator App (TOTP) or SMS number as my secondary MFA factor,
 So that my account credentials and sensitive financial workflows remain protected.
 
@@ -34,10 +48,25 @@ Acceptance Criteria / Workflow Details:
 3. User must submit a valid 6-digit TOTP token generated within the current 30-second window.
 4. If the code fails 3 times sequentially, lock the enrollment session for 5 minutes.
 5. On successful token verification, display 10 one-time emergency backup recovery codes (each 8 characters alphanumeric).
-6. User must check 'I have saved my backup codes' before the 'Complete MFA Setup' button activates.`
+6. User must check 'I have saved my backup codes' before the 'Complete MFA Setup' button activates.`,
+};
+
+export function RequirementInputForm({
+  onSubmit,
+  isLoading = false,
+  initialValues,
+}: RequirementInputFormProps) {
+  const [title, setTitle] = useState(
+    initialValues?.title || SAMPLE_EXPENSE_CLAIM.title
+  );
+  const [inputType, setInputType] = useState<RequirementInputType>(
+    initialValues?.inputType || SAMPLE_EXPENSE_CLAIM.inputType
+  );
+  const [content, setContent] = useState(
+    initialValues?.content || SAMPLE_EXPENSE_CLAIM.content
   );
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
-  const [showAiModal, setShowAiModal] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const inputTypeOptions: {
     id: RequirementInputType;
@@ -71,8 +100,78 @@ Acceptance Criteria / Workflow Details:
     },
   ];
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setValidationError(null);
+
+    if (!title.trim()) {
+      setValidationError("Please enter a requirement title.");
+      return;
+    }
+    if (!content.trim()) {
+      setValidationError("Please enter requirement or workflow content.");
+      return;
+    }
+    if (content.trim().length < 10) {
+      setValidationError("Requirement content must be at least 10 characters long.");
+      return;
+    }
+
+    onSubmit({
+      title: title.trim(),
+      content: content.trim(),
+      inputType,
+      documentFileName: uploadedFile || undefined,
+    });
+  };
+
+  const handleLoadSample = (sample: typeof SAMPLE_EXPENSE_CLAIM) => {
+    setTitle(sample.title);
+    setInputType(sample.inputType);
+    setContent(sample.content);
+    setValidationError(null);
+  };
+
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Sample Quick-Fill Pill Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800 text-xs">
+        <span className="text-slate-400 font-mono text-[11px]">
+          Quick Presets:
+        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleLoadSample(SAMPLE_EXPENSE_CLAIM)}
+            className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-mono transition-colors cursor-pointer disabled:opacity-50"
+          >
+            ★ Milestone 2 Example: Expense Claim
+          </button>
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => handleLoadSample(SAMPLE_MFA)}
+            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-[11px] font-mono transition-colors cursor-pointer disabled:opacity-50"
+          >
+            MFA Enrollment Story
+          </button>
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => {
+              setTitle("");
+              setContent("");
+              setUploadedFile(null);
+            }}
+            className="px-2 py-1 rounded-lg hover:bg-slate-800 text-slate-400 text-[11px] flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
       {/* Input Type Selector Pills */}
       <div className="space-y-2">
         <label className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
@@ -86,9 +185,10 @@ Acceptance Criteria / Workflow Details:
               <button
                 key={opt.id}
                 type="button"
+                disabled={isLoading}
                 onClick={() => setInputType(opt.id)}
                 className={cn(
-                  "p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between h-24",
+                  "p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between h-24 disabled:opacity-50",
                   isSelected
                     ? "bg-amber-500/10 border-amber-500/40 text-white shadow-xs"
                     : "bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200"
@@ -139,10 +239,11 @@ Acceptance Criteria / Workflow Details:
         <input
           id="requirement-title"
           type="text"
+          disabled={isLoading}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., User Multi-Factor Authentication (MFA) Enrollment"
-          className="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-medium"
+          placeholder="e.g., Employee Expense Reimbursement & Multi-Tier Approval"
+          className="w-full px-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-400 focus:outline-hidden focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-medium disabled:opacity-50"
         />
       </div>
 
@@ -160,24 +261,24 @@ Acceptance Criteria / Workflow Details:
               Drag & drop PRD / BRD documents
             </h4>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Supports PDF, DOCX, Markdown, and TXT (Max 25MB). File parsing will
-              be connected in an upcoming milestone.
+              Supports PDF, DOCX, Markdown, and TXT. Enter or paste the parsed text content in the workspace below.
             </p>
             <div className="mt-4">
               <button
                 type="button"
+                disabled={isLoading}
                 onClick={() =>
-                  setUploadedFile("enterprise_mfa_spec_v2.4.docx")
+                  setUploadedFile("expense_reimbursement_spec_v1.0.docx")
                 }
-                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
+                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer disabled:opacity-50"
               >
-                Choose Sample Document
+                Attach Reference Document
               </button>
             </div>
             {uploadedFile && (
               <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono">
                 <FileCheck className="w-3.5 h-3.5" />
-                <span>Selected: {uploadedFile}</span>
+                <span>Attached: {uploadedFile}</span>
               </div>
             )}
           </div>
@@ -199,82 +300,46 @@ Acceptance Criteria / Workflow Details:
         </div>
         <textarea
           id="requirement-body"
-          rows={10}
+          rows={9}
+          disabled={isLoading}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Paste full business requirement, workflow steps, or user story criteria..."
-          className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs sm:text-sm text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono leading-relaxed"
+          className="w-full px-4 py-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs sm:text-sm text-slate-200 placeholder:text-slate-400 focus:outline-hidden focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/30 transition-all font-mono leading-relaxed disabled:opacity-50"
         />
       </div>
 
-      {/* Primary Action Button */}
+      {/* Inline Form Validation Error */}
+      {validationError && (
+        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono">
+          ⚠ {validationError}
+        </div>
+      )}
+
+      {/* Primary Action Button Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-800/80">
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-          <Info className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>Stage 01: Requirement Analysis & Decomposition</span>
+        <div className="text-xs text-slate-400 font-mono">
+          Stage 01: Requirement Analysis & Extraction via Google Gemini
         </div>
 
         <button
-          type="button"
-          onClick={() => setShowAiModal(true)}
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+          type="submit"
+          disabled={isLoading}
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm transition-all shadow-md shadow-amber-500/20 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <Sparkles className="w-4 h-4 fill-slate-950" />
-          <span>Understand Requirement</span>
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+              <span>Analyzing Requirement...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 fill-slate-950" />
+              <span>Understand Requirement</span>
+            </>
+          )}
         </button>
       </div>
-
-      {/* Controlled Placeholder Modal (Explaining Gemini API Deferred) */}
-      {showAiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-amber-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
-            <button
-              onClick={() => setShowAiModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit mb-4">
-              <Sparkles className="w-6 h-6" />
-            </div>
-
-            <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30">
-              Milestone 1B Gate
-            </span>
-
-            <h3 className="text-lg font-bold text-white mt-2">
-              AI Requirement Understanding
-            </h3>
-
-            <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-              AI requirement understanding will be connected in the next
-              milestone.
-            </p>
-
-            <div className="mt-4 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 space-y-1.5">
-              <div className="font-semibold text-slate-200">
-                Architecture Roadmap:
-              </div>
-              <ul className="list-disc list-inside space-y-1 text-slate-400">
-                <li>Gemini API structured extraction prompt</li>
-                <li>Zod schema verification of extracted entities</li>
-                <li>MongoDB persistence for versioned requirements</li>
-              </ul>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowAiModal(false)}
-                className="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors cursor-pointer"
-              >
-                Acknowledge
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </form>
   );
 }

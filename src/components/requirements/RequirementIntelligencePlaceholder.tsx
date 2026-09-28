@@ -6,6 +6,7 @@ import {
   Sliders,
   CheckCircle,
   Network,
+  AlertTriangle,
   Cpu,
 } from "lucide-react";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -17,84 +18,96 @@ export function RequirementIntelligencePlaceholder() {
       icon: Users,
       description: "Actors, user types, and system entities.",
       items: [
-        "Enterprise User (End User)",
-        "Identity Provider (IdP)",
-        "System Security Daemon",
+        "Employee (Submitter)",
+        "Manager (Tier 1 Approver)",
+        "Finance (Tier 2 Approver & Payer)",
+        "Admin (Tier 3 Approver)",
       ],
-      tag: "Extracted Archetypes",
+      tag: "Actors",
     },
     {
       title: "Actions",
       icon: Play,
-      description: "Interactive operations initiated by actors.",
+      description: "Interactive operations initiated by actors or systems.",
       items: [
-        "Request MFA enrollment",
-        "Scan TOTP QR / enter manual key",
-        "Submit 6-digit verification token",
-        "Confirm backup code storage",
+        "Submit expense claim",
+        "Approve claim (Manager / Finance / Admin)",
+        "Reject claim for missing receipt",
+        "Disburse payment & send notification",
       ],
-      tag: "Operation Sequence",
+      tag: "Operations",
     },
     {
       title: "Business Rules",
       icon: Scale,
-      description: "Governance constraints and validation policies.",
+      description: "Governance constraints, approval tiers, and validation limits.",
       items: [
-        "RFC 6238 TOTP specification compliance",
-        "Token validity window strictly 30 seconds",
-        "Enforce 3 consecutive failed attempts lockout (5 min)",
-        "Must acknowledge emergency backup code generation",
+        "Expense ≤ ₹10,000 requires manager approval only",
+        "Expense ₹10,001 - ₹50,000 requires manager + finance approval",
+        "Expense > ₹50,000 requires manager + finance + admin approval",
+        "Missing receipts mandate immediate rejection",
       ],
-      tag: "Governing Logic",
+      tag: "Rules",
     },
     {
       title: "Conditions",
       icon: Sliders,
-      description: "State prerequisites and conditional branches.",
+      description: "State prerequisites and conditional decision branches.",
       items: [
-        "User authenticated into active session",
-        "MFA not currently fully configured",
-        "Account not currently in lockout state",
+        "Amount ≤ 10,000 vs 10,001 - 50,000 vs > 50,000",
+        "Receipt attached == true vs false",
+        "All required tier approvals granted",
       ],
-      tag: "State Prerequisites",
+      tag: "Conditions",
     },
     {
       title: "Outcomes",
       icon: CheckCircle,
-      description: "Expected state transitions and artifacts.",
+      description: "Expected state transitions, disbursements, and artifacts.",
       items: [
-        "MFA status updated to 'active'",
-        "10 one-time recovery codes generated & persisted",
-        "Audit log entry written with client IP and timestamp",
+        "Expense status updated to 'Approved' or 'Rejected'",
+        "Payment processed by finance department",
+        "Confirmation notification sent to employee",
       ],
-      tag: "Deterministic Results",
+      tag: "Outcomes",
     },
     {
       title: "Dependencies",
       icon: Network,
-      description: "External systems, APIs, and microservices.",
+      description: "External systems, payment services, and databases.",
       items: [
-        "Auth0 / Okta / SAML Session Service",
-        "SMS Gateway (Twilio / AWS SNS)",
-        "Encrypted Vault Secret Storage",
+        "Finance ERP / Payment Disbursement Gateway",
+        "Employee Notification Service (Email/Push)",
+        "Receipt Document Vault",
       ],
-      tag: "Integration Points",
+      tag: "Dependencies",
+    },
+    {
+      title: "Ambiguities",
+      icon: AlertTriangle,
+      description: "Vague terms, missing SLA limits, or unstated edge cases.",
+      items: [
+        "Payment processing turnaround SLA after approval not stated",
+        "Employee notification channel (SMS, Email, Push) unspecified",
+        "Appeal or resubmission process for rejected claims unstated",
+      ],
+      tag: "Ambiguities",
     },
   ];
 
   return (
     <SectionCard
-      title="Requirement Intelligence"
-      description="Structured business domain concepts extracted by the AI engine."
-      badge="Extraction Blueprint"
+      title="Extraction Architecture Blueprint"
+      description="Preview of the 7 structured domain categories extracted by the Google Gemini engine."
+      badge="Intelligence Blueprint"
       action={
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
           <Cpu className="w-3.5 h-3.5 text-amber-400" />
-          <span>Gemini Entity Extraction: Next Milestone</span>
+          <span>Google Gemini: Active Engine</span>
         </div>
       }
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {intelligenceSections.map((sec) => {
           const Icon = sec.icon;
           return (
@@ -118,11 +131,11 @@ export function RequirementIntelligencePlaceholder() {
 
               <p className="text-xs text-slate-400">{sec.description}</p>
 
-              <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-850 space-y-1.5">
+              <div className="p-2.5 rounded-lg bg-slate-900/50 border border-slate-850 space-y-1.5">
                 {sec.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-2 text-xs text-slate-300 font-mono"
+                    className="flex items-start gap-1.5 text-[11px] text-slate-300 font-mono"
                   >
                     <span className="text-amber-400/80 text-[10px] mt-0.5">
                       ▸

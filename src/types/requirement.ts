@@ -11,6 +11,7 @@ export interface RequirementIntelligence {
   conditions: string[];
   outcomes: string[];
   dependencies: string[];
+  ambiguities: string[];
 }
 
 export interface Requirement {

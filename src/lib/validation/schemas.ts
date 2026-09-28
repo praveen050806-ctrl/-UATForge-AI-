@@ -7,6 +7,23 @@ export const RequirementInputTypeSchema = z.enum([
   "document",
 ]);
 
+export const RequirementIntelligenceSchema = z.object({
+  roles: z.array(z.string()).default([]),
+  actions: z.array(z.string()).default([]),
+  businessRules: z.array(z.string()).default([]),
+  conditions: z.array(z.string()).default([]),
+  outcomes: z.array(z.string()).default([]),
+  dependencies: z.array(z.string()).default([]),
+  ambiguities: z.array(z.string()).default([]),
+});
+
+export const UnderstandRequirementRequestSchema = z.object({
+  title: z.string().min(1, "Requirement title is required"),
+  content: z.string().min(5, "Requirement content must be at least 5 characters"),
+  inputType: RequirementInputTypeSchema.optional().default("text"),
+  documentFileName: z.string().optional(),
+});
+
 export const RequirementSchema = z.object({
   id: z.string().min(1, "Requirement ID is required"),
   title: z.string().min(3, "Title must be at least 3 characters"),
