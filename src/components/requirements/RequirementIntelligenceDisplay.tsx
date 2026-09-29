@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Sparkles,
   ArrowLeft,
+  ArrowRight,
   FileText,
   Clock,
   Check,
@@ -31,6 +32,9 @@ interface RequirementIntelligenceDisplayProps {
     inputType: string;
   };
   onReset: () => void;
+  onGenerateScenarios?: () => void;
+  isGeneratingScenarios?: boolean;
+  hasScenariosGenerated?: boolean;
 }
 
 export function RequirementIntelligenceDisplay({
@@ -38,6 +42,9 @@ export function RequirementIntelligenceDisplay({
   meta,
   sourceRequirement,
   onReset,
+  onGenerateScenarios,
+  isGeneratingScenarios = false,
+  hasScenariosGenerated = false,
 }: RequirementIntelligenceDisplayProps) {
   const [copied, setCopied] = React.useState(false);
 
@@ -140,7 +147,7 @@ export function RequirementIntelligenceDisplay({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-end md:self-center">
           <button
             type="button"
             onClick={handleCopyJson}
@@ -167,6 +174,18 @@ export function RequirementIntelligenceDisplay({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Edit Input</span>
           </button>
+
+          {onGenerateScenarios && (
+            <button
+              type="button"
+              onClick={onGenerateScenarios}
+              disabled={isGeneratingScenarios}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-all shadow-sm shadow-sky-500/20 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{hasScenariosGenerated ? "Regenerate Scenarios" : "Generate UAT Scenarios"}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -286,6 +305,39 @@ export function RequirementIntelligenceDisplay({
           })}
         </div>
       </SectionCard>
+
+      {/* Stage 2 Callout Banner */}
+      {onGenerateScenarios && !hasScenariosGenerated && (
+        <div className="p-6 rounded-2xl bg-gradient-to-r from-sky-500/15 via-slate-900 to-indigo-500/15 border border-sky-500/30 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-xl">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 font-semibold uppercase tracking-wider">
+                Stage 2: Scenario Generation
+              </span>
+              <span className="text-xs text-emerald-400 font-mono flex items-center gap-1">
+                <Check className="w-3 h-3" /> Intelligence Verified
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-white tracking-tight">
+              Ready to Generate UAT Scenarios
+            </h3>
+            <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+              Google Gemini will synthesize structured test scenarios across 4 key categories: Positive paths, Negative failure conditions, exact Boundary thresholds, and Role-Based permissions.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onGenerateScenarios}
+            disabled={isGeneratingScenarios}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-sky-500/25 cursor-pointer shrink-0"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Generate UAT Scenarios</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Footer Timestamp & Model */}
       {meta?.extractedAt && (

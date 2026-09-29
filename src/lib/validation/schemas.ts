@@ -42,6 +42,37 @@ export const ScenarioTypeSchema = z.enum([
   "Role-Based",
 ]);
 
+export const ScenarioPrioritySchema = z.enum([
+  "Critical",
+  "High",
+  "Medium",
+  "Low",
+]);
+
+export const GeneratedScenarioSchema = z.object({
+  scenarioId: z.string().min(1, "scenarioId is required"),
+  title: z.string().min(3, "title must be at least 3 characters"),
+  description: z.string().min(5, "description must be at least 5 characters"),
+  type: ScenarioTypeSchema,
+  role: z.string().min(1, "role is required"),
+  businessRule: z.string().min(1, "businessRule is required"),
+  preconditions: z.array(z.string()).default([]),
+  testData: z.string().default(""),
+  expectedOutcome: z.string().min(1, "expectedOutcome is required"),
+  priority: ScenarioPrioritySchema,
+  requirementReference: z.string().min(1, "requirementReference is required"),
+});
+
+export const GenerateScenariosRequestSchema = z.object({
+  requirementTitle: z.string().min(1, "requirementTitle is required"),
+  requirementContent: z.string().min(5, "requirementContent must be at least 5 characters"),
+  intelligence: RequirementIntelligenceSchema,
+});
+
+export const GenerateScenariosResponseSchema = z.object({
+  scenarios: z.array(GeneratedScenarioSchema).min(1, "At least one scenario must be generated"),
+});
+
 export const ScenarioSchema = z.object({
   id: z.string().min(1),
   requirementId: z.string().min(1),
