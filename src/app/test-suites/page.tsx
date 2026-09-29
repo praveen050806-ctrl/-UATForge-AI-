@@ -33,15 +33,6 @@ export default function TestSuitesPage() {
         }
       />
 
-      {/* Notice Banner */}
-      <div className="mb-6 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs text-slate-300 flex items-center justify-between gap-4">
-        <p>
-          <strong className="text-amber-400 font-mono">Curated Demonstration Suite:</strong>{" "}
-          Showing sample multi-archetype test cases (Positive, Negative, Boundary, Role-Based)
-          demonstrating column structure and modal drill-down.
-        </p>
-      </div>
-
       <SectionCard
         title="Active UAT Cases"
         description="Comprehensive acceptance testing scenarios ready for human signoff and execution."

@@ -5,8 +5,6 @@ import {
   BrainCircuit,
   ListChecks,
   ShieldCheck,
-  UserCheck,
-  Download,
   ArrowRight,
   Sparkles,
   Layers,
@@ -14,6 +12,8 @@ import {
   GitMerge,
   BarChart3,
   CheckCircle2,
+  PlayCircle,
+  Bug,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -22,37 +22,37 @@ export default function HomePage() {
       step: "01",
       name: "Requirement",
       icon: FileText,
-      desc: "Paste user stories, workflows, or upload business specs.",
+      desc: "Paste user stories, workflows, documents, screenshots, or web app URL.",
     },
     {
       step: "02",
       name: "Understand",
       icon: BrainCircuit,
-      desc: "Extract actors, business rules, conditions, and outcomes.",
+      desc: "Extract actors, business rules, conditions, and outcomes via Gemini.",
     },
     {
       step: "03",
       name: "Generate",
       icon: ListChecks,
-      desc: "Produce Positive, Negative, Boundary, & Role scenarios.",
+      desc: "Synthesize Positive, Negative, Boundary, & Role-Based scenarios.",
     },
     {
       step: "04",
       name: "Validate",
       icon: ShieldCheck,
-      desc: "Deterministic quality checks for duplicates & omissions.",
+      desc: "Deterministic quality inspection evaluating 11 rules over session suite.",
     },
     {
       step: "05",
-      name: "Review",
-      icon: UserCheck,
-      desc: "Human-in-the-loop editing, regeneration, and signoff.",
+      name: "UAT Execute",
+      icon: PlayCircle,
+      desc: "Step-by-step human verification with observable actual result capture.",
     },
     {
       step: "06",
-      name: "Deliver",
-      icon: Download,
-      desc: "Export formatted Excel, CSV, or sync to Jira/ALM.",
+      name: "Defect & Trace",
+      icon: Bug,
+      desc: "Instant defect logging from failed runs with full 6-stage audit chain.",
     },
   ];
 
@@ -92,6 +92,12 @@ export default function HomePage() {
             className="text-xs font-medium text-slate-400 hover:text-slate-100 transition-colors hidden sm:block"
           >
             Test Suites
+          </Link>
+          <Link
+            href="/execution"
+            className="text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors hidden sm:block"
+          >
+            UAT Execution
           </Link>
           <Link
             href="/dashboard"

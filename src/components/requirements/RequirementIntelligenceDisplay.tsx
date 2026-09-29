@@ -195,11 +195,13 @@ export function RequirementIntelligenceDisplay({
           <div className="flex items-center gap-2">
             <FileText className="w-3.5 h-3.5 text-slate-400" />
             <span className="uppercase tracking-wider font-semibold text-slate-300">
-              User-Provided Source Requirement (Input)
+              {sourceRequirement.inputType === "use-case"
+                ? "User-Provided Use Case (Input)"
+                : "User-Provided Source Requirement (Input)"}
             </span>
           </div>
           <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-            Format: {sourceRequirement.inputType}
+            Format: {sourceRequirement.inputType === "use-case" ? "Use Case" : sourceRequirement.inputType}
           </span>
         </div>
         <h3 className="font-semibold text-sm text-slate-100">

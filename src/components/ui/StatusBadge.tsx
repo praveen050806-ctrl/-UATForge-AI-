@@ -22,13 +22,16 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
     case "parsed":
     case "Partial":
     case "Warning":
+    case "WARNING":
       badgeStyles = "bg-amber-950/60 text-amber-300 border-amber-800/50";
       break;
     case "Critical":
+    case "CRITICAL":
     case "Uncovered":
       badgeStyles = "bg-rose-950/60 text-rose-300 border-rose-800/50";
       break;
     case "Info":
+    case "INFO":
       badgeStyles = "bg-sky-950/60 text-sky-300 border-sky-800/50";
       break;
     case "Draft":

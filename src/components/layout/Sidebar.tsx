@@ -8,6 +8,8 @@ import {
   FileText,
   ListChecks,
   ShieldCheck,
+  PlayCircle,
+  Bug,
   GitMerge,
   Download,
   Sparkles,
@@ -38,10 +40,22 @@ const NAV_ITEMS = [
     badge: undefined,
   },
   {
+    name: "Execution",
+    href: "/execution",
+    icon: PlayCircle,
+    badge: "UAT Live",
+  },
+  {
     name: "Validation",
     href: "/validation",
     icon: ShieldCheck,
     badge: "Quality",
+  },
+  {
+    name: "Defects",
+    href: "/defects",
+    icon: Bug,
+    badge: "Workflow",
   },
   {
     name: "Traceability",
@@ -188,8 +202,8 @@ export function Sidebar() {
           </div>
 
           <div className="mt-3 flex items-center justify-between text-[10px] font-mono text-slate-400 px-1">
-            <span>Milestone 1B</span>
-            <span className="text-amber-400/90 font-medium">Shell Mode</span>
+            <span>Milestone 5</span>
+            <span className="text-emerald-400 font-medium">UAT Engine Active</span>
           </div>
         </div>
       </aside>

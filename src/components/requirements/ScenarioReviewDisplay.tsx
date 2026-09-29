@@ -13,6 +13,9 @@ import {
   Clock,
   Sparkles,
   Database,
+  ListChecks,
+  Loader2,
+  ArrowRight,
 } from "lucide-react";
 import {
   GeneratedScenario,
@@ -31,6 +34,9 @@ interface ScenarioReviewDisplayProps {
   };
   requirementTitle: string;
   onRegenerate?: () => void;
+  onGenerateTestCases?: () => void;
+  isGeneratingTestCases?: boolean;
+  hasTestCasesGenerated?: boolean;
 }
 
 const TYPE_CONFIG: Record<
@@ -115,6 +121,9 @@ export function ScenarioReviewDisplay({
   meta,
   requirementTitle,
   onRegenerate,
+  onGenerateTestCases,
+  isGeneratingTestCases = false,
+  hasTestCasesGenerated = false,
 }: ScenarioReviewDisplayProps) {
   const [selectedType, setSelectedType] = useState<ScenarioType | "All">("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -170,7 +179,7 @@ export function ScenarioReviewDisplay({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={handleCopyJson}
@@ -188,6 +197,7 @@ export function ScenarioReviewDisplay({
               </>
             )}
           </button>
+
           {onRegenerate && (
             <button
               type="button"
@@ -196,6 +206,32 @@ export function ScenarioReviewDisplay({
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Regenerate</span>
+            </button>
+          )}
+
+          {onGenerateTestCases && (
+            <button
+              type="button"
+              onClick={onGenerateTestCases}
+              disabled={isGeneratingTestCases}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-sm ${
+                hasTestCasesGenerated
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30"
+                  : "bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold shadow-md shadow-emerald-500/20"
+              } ${isGeneratingTestCases ? "opacity-70 cursor-not-allowed" : ""}`}
+            >
+              {isGeneratingTestCases ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ListChecks className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {isGeneratingTestCases
+                  ? "Generating Test Cases..."
+                  : hasTestCasesGenerated
+                  ? "Regenerate Test Cases"
+                  : "Generate UAT Test Cases"}
+              </span>
             </button>
           )}
         </div>
@@ -328,6 +364,47 @@ export function ScenarioReviewDisplay({
           )}
         </div>
       </div>
+
+      {/* Stage 3 Conversion Promotion Callout */}
+      {onGenerateTestCases && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-500/10 via-slate-900 to-sky-500/10 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold uppercase tracking-wider">
+                Stage 3 Action
+              </span>
+              <span className="text-xs font-semibold text-white">
+                {hasTestCasesGenerated
+                  ? `Active Suite: Test Cases Generated Below`
+                  : `Transform ${summary.total} Scenarios into Detailed Execution Test Cases`}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Derive sequential step-by-step observable actions, step-level expected results, test data, and traceability with real Google Gemini.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onGenerateTestCases}
+            disabled={isGeneratingTestCases}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all shadow-md shadow-emerald-500/20 cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            {isGeneratingTestCases ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ListChecks className="w-4 h-4" />
+            )}
+            <span>
+              {isGeneratingTestCases
+                ? "Synthesizing Test Cases..."
+                : hasTestCasesGenerated
+                ? "Regenerate UAT Test Cases"
+                : "Generate UAT Test Cases"}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Scenario List */}
       <SectionCard

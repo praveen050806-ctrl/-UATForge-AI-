@@ -4,3 +4,5 @@ export * from "./scenario";
 export * from "./test-case";
 export * from "./validation";
 export * from "./traceability";
+export * from "./execution";
+export * from "./defect";

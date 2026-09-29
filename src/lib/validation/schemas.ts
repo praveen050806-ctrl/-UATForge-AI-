@@ -3,8 +3,11 @@ import { z } from "zod";
 export const RequirementInputTypeSchema = z.enum([
   "text",
   "user-story",
+  "use-case",
   "workflow",
   "document",
+  "screenshot",
+  "web-url",
 ]);
 
 export const RequirementIntelligenceSchema = z.object({
@@ -15,6 +18,10 @@ export const RequirementIntelligenceSchema = z.object({
   outcomes: z.array(z.string()).default([]),
   dependencies: z.array(z.string()).default([]),
   ambiguities: z.array(z.string()).default([]),
+  screens: z.array(z.string()).default([]),
+  inputs: z.array(z.string()).default([]),
+  outputs: z.array(z.string()).default([]),
+  workflows: z.array(z.string()).default([]),
 });
 
 export const UnderstandRequirementRequestSchema = z.object({
@@ -22,6 +29,8 @@ export const UnderstandRequirementRequestSchema = z.object({
   content: z.string().min(5, "Requirement content must be at least 5 characters"),
   inputType: RequirementInputTypeSchema.optional().default("text"),
   documentFileName: z.string().optional(),
+  targetUrl: z.string().optional(),
+  screenshotFileName: z.string().optional(),
 });
 
 export const RequirementSchema = z.object({
@@ -84,10 +93,44 @@ export const ScenarioSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
+export const TestCasePrioritySchema = z.enum([
+  "Critical",
+  "High",
+  "Medium",
+  "Low",
+]);
+
 export const TestStepSchema = z.object({
-  stepNumber: z.number().int().positive(),
-  action: z.string().min(3),
-  expectedResult: z.string().min(3),
+  stepNumber: z.number().int().positive({ message: "stepNumber must be a positive integer" }),
+  action: z.string().min(1, { message: "action must be non-empty" }),
+  expectedResult: z.string().min(1, { message: "expectedResult must be non-empty" }),
+});
+
+export const GeneratedTestCaseSchema = z.object({
+  testCaseId: z.string().min(1, { message: "testCaseId must be non-empty" }),
+  scenarioId: z.string().min(1, { message: "scenarioId must be non-empty" }),
+  title: z.string().min(3, { message: "title must be meaningful" }),
+  scenario: z.string().min(1, { message: "scenario must be non-empty" }),
+  type: ScenarioTypeSchema,
+  role: z.string().min(1, { message: "role must be non-empty" }),
+  priority: TestCasePrioritySchema,
+  preconditions: z.array(z.string()).default([]),
+  testSteps: z.array(TestStepSchema).min(1, { message: "testSteps must contain at least one step" }),
+  testData: z.string().default(""),
+  expectedResult: z.string().min(1, { message: "expectedResult must be present" }),
+  requirementReference: z.string().min(1, { message: "requirementReference must be present" }),
+  businessRuleReference: z.string().min(1, { message: "businessRuleReference must be present" }),
+});
+
+export const GenerateTestCasesRequestSchema = z.object({
+  requirementTitle: z.string().min(1, { message: "requirementTitle is required" }),
+  requirementContent: z.string().min(5, { message: "requirementContent must be at least 5 characters" }),
+  intelligence: RequirementIntelligenceSchema.optional(),
+  scenarios: z.array(GeneratedScenarioSchema).min(1, { message: "At least one scenario must be provided" }),
+});
+
+export const GenerateTestCasesResponseSchema = z.object({
+  testCases: z.array(GeneratedTestCaseSchema).min(1, { message: "At least one test case must be generated" }),
 });
 
 export const TestCaseSchema = z.object({
@@ -98,7 +141,7 @@ export const TestCaseSchema = z.object({
   scenario: z.string().min(3),
   type: ScenarioTypeSchema,
   role: z.string().min(1),
-  priority: z.enum(["Critical", "High", "Medium", "Low"]),
+  priority: TestCasePrioritySchema,
   status: z.enum(["Ready", "In Review", "Draft", "Approved"]),
   preconditions: z.array(z.string()),
   steps: z.array(TestStepSchema),
@@ -115,10 +158,63 @@ export const ValidationIssueSchema = z.object({
     "Missing Information",
     "Requirement Quality",
     "Ambiguous Requirements",
+    "Execution Integrity",
   ]),
-  severity: z.enum(["Critical", "Warning", "Info"]),
+  severity: z.enum(["Critical", "Warning", "Info", "CRITICAL", "WARNING", "INFO"]),
   title: z.string().min(3),
   description: z.string().min(5),
   targetRef: z.string().min(1),
   suggestedFix: z.string().optional(),
+  requirementId: z.string().optional(),
+  scenarioId: z.string().optional(),
+  testCaseId: z.string().optional(),
+  defectId: z.string().optional(),
+  linkHref: z.string().optional(),
 });
+
+
+export const TestExecutionStatusSchema = z.enum([
+  "NOT_EXECUTED",
+  "PASS",
+  "FAIL",
+  "BLOCKED",
+]);
+
+export const TestStepExecutionSchema = z.object({
+  stepNumber: z.number().int().positive({ message: "stepNumber must be a positive integer" }),
+  actualResult: z.string().default(""),
+  status: TestExecutionStatusSchema,
+});
+
+export const TestCaseExecutionSchema = z.object({
+  testCaseId: z.string().min(1, { message: "testCaseId must be non-empty" }),
+  scenarioId: z.string().min(1, { message: "scenarioId must be non-empty" }),
+  status: TestExecutionStatusSchema,
+  stepResults: z.array(TestStepExecutionSchema),
+  actualResult: z.string().default(""),
+  testerComment: z.string().optional(),
+  executedAt: z.string().optional(),
+  evidenceNote: z.string().optional(),
+  defectId: z.string().optional(),
+});
+
+export const DefectStatusSchema = z.enum(["OPEN", "IN_REVIEW", "RESOLVED"]);
+
+export const DefectSeveritySchema = z.enum(["CRITICAL", "HIGH", "MEDIUM", "LOW"]);
+
+export const DefectRecordSchema = z.object({
+  defectId: z.string().min(1, { message: "defectId is required" }),
+  testCaseId: z.string().min(1, { message: "testCaseId is required" }),
+  scenarioId: z.string().min(1, { message: "scenarioId is required" }),
+  title: z.string().min(1, { message: "Defect title is required" }),
+  severity: DefectSeveritySchema,
+  priority: TestCasePrioritySchema,
+  expectedResult: z.string(),
+  actualResult: z.string(),
+  stepsToReproduce: z.array(z.string()),
+  testerComment: z.string(),
+  status: DefectStatusSchema,
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+});
+

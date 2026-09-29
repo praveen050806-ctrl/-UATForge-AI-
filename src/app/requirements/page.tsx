@@ -11,13 +11,23 @@ import { RequirementAnalysisError } from "@/components/requirements/RequirementA
 import { ScenarioGenerationLoading } from "@/components/requirements/ScenarioGenerationLoading";
 import { ScenarioGenerationError } from "@/components/requirements/ScenarioGenerationError";
 import { ScenarioReviewDisplay } from "@/components/requirements/ScenarioReviewDisplay";
+import { TestCaseGenerationLoading } from "@/components/requirements/TestCaseGenerationLoading";
+import { TestCaseGenerationError } from "@/components/requirements/TestCaseGenerationError";
+import { TestCaseReviewDisplay } from "@/components/requirements/TestCaseReviewDisplay";
 import { SectionCard } from "@/components/ui/SectionCard";
 import {
   RequirementIntelligence,
   RequirementInputType,
   GeneratedScenario,
   ScenarioGenerationSummary,
+  GeneratedTestCase,
+  TestCaseGenerationSummary,
 } from "@/types";
+import {
+  setActiveSuite,
+  setActiveRequirement,
+  setActiveScenarios,
+} from "@/lib/session/uat-session";
 
 export default function RequirementsPage() {
   // Stage 1: Requirement Intelligence State
@@ -60,6 +70,25 @@ export default function RequirementsPage() {
     retryable?: boolean;
   } | null>(null);
 
+  // Stage 3: Test Case Generation State
+  const [testCaseStatus, setTestCaseStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [testCases, setTestCases] = useState<GeneratedTestCase[] | null>(null);
+  const [testCaseSummary, setTestCaseSummary] =
+    useState<TestCaseGenerationSummary | null>(null);
+  const [testCaseMeta, setTestCaseMeta] = useState<{
+    model?: string;
+    generatedAt?: string;
+    testCaseCount?: number;
+  } | null>(null);
+  const [testCaseError, setTestCaseError] = useState<{
+    message: string;
+    code?: string;
+    details?: string;
+    retryable?: boolean;
+  } | null>(null);
+
   // Ingestion / Understanding Handler
   const handleUnderstand = async (params: {
     title: string;
@@ -70,11 +99,15 @@ export default function RequirementsPage() {
     setStatus("loading");
     setError(null);
     setSourceRequirement(params);
-    // Reset scenario state when new requirement is ingested
+    // Reset subsequent stages when new requirement is ingested
     setScenarioStatus("idle");
     setScenarios(null);
     setScenarioSummary(null);
     setScenarioError(null);
+    setTestCaseStatus("idle");
+    setTestCases(null);
+    setTestCaseSummary(null);
+    setTestCaseError(null);
 
     try {
       const response = await fetch("/api/requirements/understand", {
@@ -102,6 +135,16 @@ export default function RequirementsPage() {
       setIntelligence(result.data);
       setMeta(result.meta);
       setStatus("success");
+
+      // Save requirement session state
+      setActiveRequirement({
+        title: params.title,
+        rawContent: params.content,
+        inputType: params.inputType,
+        documentFileName: params.documentFileName,
+        intelligence: result.data,
+        timestamp: new Date().toISOString(),
+      });
     } catch (err: unknown) {
       setStatus("error");
       const msg =
@@ -122,6 +165,11 @@ export default function RequirementsPage() {
 
     setScenarioStatus("loading");
     setScenarioError(null);
+    // Reset test case stage if scenarios are regenerated
+    setTestCaseStatus("idle");
+    setTestCases(null);
+    setTestCaseSummary(null);
+    setTestCaseError(null);
 
     try {
       const response = await fetch("/api/scenarios/generate", {
@@ -153,6 +201,9 @@ export default function RequirementsPage() {
       setScenarioSummary(result.data.summary);
       setScenarioMeta(result.meta);
       setScenarioStatus("success");
+
+      // Save scenarios to session state
+      setActiveScenarios(result.data.scenarios);
     } catch (err: unknown) {
       setScenarioStatus("error");
       const msg =
@@ -167,6 +218,71 @@ export default function RequirementsPage() {
     }
   };
 
+  // Stage 3: Test Case Generation Handler
+  const handleGenerateTestCases = async () => {
+    if (!sourceRequirement || !scenarios || scenarios.length === 0) return;
+
+    setTestCaseStatus("loading");
+    setTestCaseError(null);
+
+    try {
+      const response = await fetch("/api/test-cases/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requirementTitle: sourceRequirement.title,
+          requirementContent: sourceRequirement.content,
+          scenarios,
+          intelligence: intelligence || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setTestCaseStatus("error");
+        setTestCaseError({
+          message: result.error || "Failed to generate UAT test cases with Gemini.",
+          code: result.code || "REQUEST_FAILED",
+          details: result.details,
+          retryable: result.retryable,
+        });
+        return;
+      }
+
+      const generatedCases: GeneratedTestCase[] = result.data.testCases;
+      const summary: TestCaseGenerationSummary = result.data.summary;
+      const metaInfo = result.meta;
+
+      setTestCases(generatedCases);
+      setTestCaseSummary(summary);
+      setTestCaseMeta(metaInfo);
+      setTestCaseStatus("success");
+
+      // Save to unified session state
+      setActiveSuite({
+        requirementTitle: sourceRequirement.title,
+        testCases: generatedCases,
+        summary,
+        meta: metaInfo,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err: unknown) {
+      setTestCaseStatus("error");
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Network error occurred while connecting to the test case generation service.";
+      setTestCaseError({
+        message: msg,
+        code: "NETWORK_ERROR",
+        details: "Ensure your Next.js application server is running and reachable.",
+      });
+    }
+  };
+
   const handleReset = () => {
     setStatus("idle");
     setError(null);
@@ -174,6 +290,17 @@ export default function RequirementsPage() {
     setScenarios(null);
     setScenarioSummary(null);
     setScenarioError(null);
+    setTestCaseStatus("idle");
+    setTestCases(null);
+    setTestCaseSummary(null);
+    setTestCaseError(null);
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("uatforge_active_suite");
+      } catch {
+        // ignore
+      }
+    }
   };
 
   return (
@@ -182,7 +309,9 @@ export default function RequirementsPage() {
         title="Requirement Workspace"
         subtitle="Ingest business requirements, user stories, or specification documents for UAT decomposition via Google Gemini."
         badge={
-          scenarioStatus === "success"
+          testCaseStatus === "success"
+            ? "Stage 3: Test Case Suite Active"
+            : scenarioStatus === "success"
             ? "Stage 2: Scenario Suite Active"
             : status === "success"
             ? "Stage 1: Intelligence Ready"
@@ -243,6 +372,35 @@ export default function RequirementsPage() {
               meta={scenarioMeta || undefined}
               requirementTitle={sourceRequirement.title}
               onRegenerate={handleGenerateScenarios}
+              onGenerateTestCases={handleGenerateTestCases}
+              isGeneratingTestCases={testCaseStatus === "loading"}
+              hasTestCasesGenerated={testCaseStatus === "success"}
+            />
+          )}
+
+        {/* Stage 3 Error State */}
+        {testCaseStatus === "error" && testCaseError && (
+          <TestCaseGenerationError
+            error={testCaseError}
+            onRetry={handleGenerateTestCases}
+            onDismiss={() => setTestCaseError(null)}
+          />
+        )}
+
+        {/* Stage 3 Loading State */}
+        {testCaseStatus === "loading" && <TestCaseGenerationLoading />}
+
+        {/* Stage 3 Success State: Display Generated Test Cases */}
+        {testCaseStatus === "success" &&
+          testCases &&
+          testCaseSummary &&
+          sourceRequirement && (
+            <TestCaseReviewDisplay
+              testCases={testCases}
+              summary={testCaseSummary}
+              meta={testCaseMeta || undefined}
+              requirementTitle={sourceRequirement.title}
+              onRegenerate={handleGenerateTestCases}
             />
           )}
 
@@ -269,3 +427,4 @@ export default function RequirementsPage() {
     </AppShell>
   );
 }
+

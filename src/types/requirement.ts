@@ -1,8 +1,11 @@
 export type RequirementInputType =
   | "text"
   | "user-story"
+  | "use-case"
   | "workflow"
-  | "document";
+  | "document"
+  | "screenshot"
+  | "web-url";
 
 export interface RequirementIntelligence {
   roles: string[];
@@ -12,6 +15,10 @@ export interface RequirementIntelligence {
   outcomes: string[];
   dependencies: string[];
   ambiguities: string[];
+  screens?: string[];
+  inputs?: string[];
+  outputs?: string[];
+  workflows?: string[];
 }
 
 export interface Requirement {

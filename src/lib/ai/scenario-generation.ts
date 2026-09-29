@@ -111,7 +111,13 @@ export async function generateScenarios(
     throw new GeminiConfigError();
   }
 
-  const modelName = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const preferredModel = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+  const candidateModels = [
+    preferredModel,
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
+  ].filter((m, i, arr) => arr.indexOf(m) === i);
 
   // 3. Construct prompt
   const userPrompt = `REQUIREMENT TITLE:
@@ -141,37 +147,91 @@ Ensure balanced coverage across:
 
 Return ONLY valid JSON matching the schema.`;
 
-  // 4. Initialize Gemini client
-  const ai = new GoogleGenAI({ apiKey });
+  // 4. Initialize Gemini client with 60s timeout for enterprise network reliability
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: { timeout: 60000 },
+  });
 
   let responseText: string | undefined;
+  let lastError: unknown;
+  let usedModel = preferredModel;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: userPrompt,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: "application/json",
-        temperature: 0.2,
-      },
-    });
+  for (const modelToTry of candidateModels) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelToTry,
+        contents: userPrompt,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: "application/json",
+          temperature: 0.2,
+        },
+      });
 
-    responseText = response.text;
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const sanitized = errorMessage.replace(/key=[a-zA-Z0-9_-]+/g, "key=***");
-    throw new GeminiApiError(`Gemini API call failed: ${sanitized}`, error);
+      responseText = response.text;
+      usedModel = modelToTry;
+      if (responseText && responseText.trim().length > 0) {
+        break;
+      }
+    } catch (error: unknown) {
+      lastError = error;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isRetryable =
+        errorMessage.includes("503") ||
+        errorMessage.includes("429") ||
+        errorMessage.includes("high demand") ||
+        errorMessage.includes("RESOURCE_EXHAUSTED");
+      if (!isRetryable) {
+        const sanitized = errorMessage.replace(/key=[a-zA-Z0-9_-]+/g, "key=***");
+        throw new GeminiApiError(`Gemini API call failed: ${sanitized}`, error);
+      }
+    }
   }
 
   if (!responseText || responseText.trim().length === 0) {
-    throw new GeminiResponseError("Gemini returned an empty scenario response.");
+    const errorMsg = lastError instanceof Error ? lastError.message : String(lastError);
+    const sanitized = errorMsg.replace(/key=[a-zA-Z0-9_-]+/g, "key=***");
+    throw new GeminiApiError(`Gemini API call failed across all candidate models: ${sanitized}`, lastError);
   }
 
-  // 5. Parse JSON
+  // 5. Parse JSON using safe balanced-brace extractor for robust handling of extra LLM tokens
   let parsedJson: unknown;
   try {
-    parsedJson = JSON.parse(responseText.trim());
+    let cleaned = responseText.trim();
+    if (cleaned.startsWith("```")) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    }
+    try {
+      parsedJson = JSON.parse(cleaned);
+    } catch {
+      const firstBrace = cleaned.indexOf("{");
+      if (firstBrace !== -1) {
+        let openBraces = 0;
+        let inString = false;
+        let isEscaped = false;
+        for (let i = firstBrace; i < cleaned.length; i++) {
+          const char = cleaned[i];
+          if (char === '"' && !isEscaped) {
+            inString = !inString;
+          } else if (!inString) {
+            if (char === "{") openBraces++;
+            else if (char === "}") {
+              openBraces--;
+              if (openBraces === 0) {
+                const candidate = cleaned.slice(firstBrace, i + 1);
+                parsedJson = JSON.parse(candidate);
+                break;
+              }
+            }
+          }
+          isEscaped = char === "\\" && !isEscaped;
+        }
+      }
+      if (!parsedJson) {
+        throw new Error("Unable to locate valid balanced JSON object");
+      }
+    }
   } catch (err: unknown) {
     void err;
     throw new GeminiResponseError(
@@ -212,7 +272,7 @@ Return ONLY valid JSON matching the schema.`;
     scenarios,
     summary,
     meta: {
-      model: modelName,
+      model: usedModel,
       generatedAt: new Date().toISOString(),
       scenarioCounts: summary,
     },
